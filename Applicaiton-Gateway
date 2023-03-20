@@ -117,3 +117,11 @@ Ans > The error message indicates that you have reached the limit of creating pu
 
 
 
+
+ provider "azurerm" {
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+      }
+    }
+}
