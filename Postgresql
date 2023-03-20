@@ -1,0 +1,115 @@
+# Configure the Azure provider
+provider "azurerm" {
+  features {}
+}
+
+# Create a resource group
+resource "azurerm_resource_group" "database" {
+  name     = "my-database"
+  location = "East US"
+}
+
+# Create a PostgreSQL server
+resource "azurerm_postgresql_server" "server-postgres" {
+  name                = "my-postgres-server"
+  location            = azurerm_resource_group.database.location
+  resource_group_name = azurerm_resource_group.database.name
+  version             = "13"
+  administrator_login = "adminuser"
+  administrator_login_password = "Password@#####"
+}
+
+# Create a firewall rule to allow access to the server
+resource "azurerm_postgresql_firewall_rule" "postgres-firewall" {
+  name                = "allow-local"
+  resource_group_name = azurerm_resource_group.database.name
+  server_name         = azurerm_postgresql_server.server-postgres.name
+  start_ip_address    = "0.0.0.0"
+  end_ip_address      = "0.0.0.0"
+}
+
+# Create a PostgreSQL database
+resource "azurerm_postgresql_database" "postgresdata" {
+  name                = "mydatabase"
+  server_name         = azurerm_postgresql_server.server-postgres.name
+  resource_group_name = azurerm_resource_group.database.name
+  charset             = "UTF8"
+  collation           = "English_United States.1252"
+}
+
+
+Errors
+########################################################
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 13, in resource "azurerm_postgresql_server" "server-postgres":
+│   13: resource "azurerm_postgresql_server" "server-postgres" {
+│
+│ The argument "sku_name" is required, but no definition was found.
+╵
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 13, in resource "azurerm_postgresql_server" "server-postgres":
+│   13: resource "azurerm_postgresql_server" "server-postgres" {
+│
+│ The argument "ssl_enforcement_enabled" is required, but no definition was found.
+--------------------------------------------------------------------------------------------------------------------
+As the error message suggests, you need to include the ssl_enforcement_enabled and sku_name arguments in your azurerm_postgresql_server resource block.
+
+For ssl_enforcement_enabled, you can set it to true to enforce SSL connections, or false to allow non-SSL connections.
+
+For sku_name, you need to specify the pricing tier for your PostgreSQL server. You can choose one of the available tiers based on your performance and cost requirements.
+
+Here's an updated version of your azurerm_postgresql_server resource block that includes these two required arguments:
+==========================================================================================================================================
+add these two lines in (resource "azurerm_postgresql_server" "server-postgres")
+
+$ssl_enforcement_enabled = true
+$sku_name = "GP_Gen5_2"
+===================================================================================================================
+
+
+
+1)Using below command to connect terminal:
+psql --host=dbatsdemopostegresql.postgres.database.azure.com --port=5432 --username=adminuser@dbatsdemopostegresql --dbname=postgres
+
+This will connect you to the default postgres database.
+
+2)reate a new database:
+$CREATE DATABASE newdb;
+This will create a new database named newdb.
+
+Connect to the new database:
+
+$ \c newdb
+This will switch to the newdb database.
+
+Now you can create tables and perform other operations on the new database.
+---------------------------------------------------------------------------------------------------
+next how to create tables
+To create tables in your PostgreSQL database, you can use SQL commands to define the table schema and its columns. Here is an example of how to create a table called customers with three columns:
+#####################
+CREATE TABLE customers (
+   customer_id SERIAL PRIMARY KEY,
+   first_name VARCHAR(50),
+   last_name VARCHAR(50)
+);
+#######################
+This will create a table with three columns: customer_id, first_name, and last_name. The customer_id column is defined as a SERIAL data type, which is an auto-incrementing integer. The PRIMARY KEY constraint on this column ensures that each row has a unique identifier.
+
+Once you have defined the table schema, you can insert data into the table using the INSERT INTO command:
+
+################################
+INSERT INTO customers (first_name, last_name) VALUES ('John', 'Doe');
+INSERT INTO customers (first_name, last_name) VALUES ('Jane', 'Smith');
+######################################
+This will insert two rows into the customers table with the specified first and last names.
+To retrieve data from the table, you can use the SELECT command:
+######################################################
+SELECT * FROM customers;
+##################################################
+This will return all rows from the customers table.
+
+interface like pgAdmin to do this.
